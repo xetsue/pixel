@@ -89,6 +89,11 @@
             background-color: #111;
         }
         
+        .frame.dragover {
+            border-style: dashed;
+            border-color: #888;
+        }
+        
         #pixel-canvas {
             width: 100%;
             height: 100%;
@@ -111,6 +116,18 @@
             z-index: 9999 !important;
             background-color: var(--bg-color) !important;
         }
+        
+        .frame.fullscreen-active .action-buttons {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 3s ease-out;
+        }
+        
+        .frame.fullscreen-active.reveal-ui .action-buttons {
+            opacity: 1;
+            pointer-events: auto;
+            transition: opacity 0.2s ease-in;
+        }
 
         .action-buttons,
         .fullscreen-bottom-left-controls {
@@ -130,21 +147,7 @@
             transform: scale(var(--in-frame-ui-scale));
             transform-origin: top left;
         }
-
-        .fullscreen-bottom-left-controls {
-            bottom: 5px;
-            left: 5px;
-            display: none;
-            transform: scale(var(--in-frame-ui-scale));
-            transform-origin: bottom left;
-        }
         
-        .frame.ui-hidden .action-buttons,
-        .frame.ui-hidden .fullscreen-bottom-left-controls {
-            opacity: 0;
-            pointer-events: none;
-        }
-
         .controls {
             display: flex;
             justify-content: flex-start;
@@ -179,11 +182,59 @@
             flex-grow: 1;
         }
 
-        .action-buttons button,
-        .fullscreen-bottom-left-controls button {
+        .action-buttons button {
             font-size: 11px;
             padding: 3px 6px;
             border-radius: 3px;
+        }
+
+        .dialogue-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 10005;
+            display: none;
+        }
+        
+        .dialogue {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(20, 20, 20, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--settings-outline);
+            border-radius: 5px;
+            padding: 10px;
+            z-index: 10010;
+        }
+        .dialogue-header {
+            text-align: center;
+            font-weight: bold;
+            color: var(--text-muted, #888);
+            margin-bottom: 10px;
+            cursor: default;
+        }
+        .dialogue-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .dialogue-options button {
+            background: rgba(255, 255, 255, 0.9);
+            color: #000;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 3px;
+            width: 100px;
+        }
+        .dialogue-options button.active {
+            box-shadow: 0 0 0 2px var(--frame-color);
         }
 
         #settings-panel, #advanced-settings-panel {
@@ -242,8 +293,14 @@
         .settings-header h3 {
             margin: 0;
         }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
         
-        .theme-toggle-header-btn {
+        .theme-toggle-header-btn, .history-btn {
             background: none;
             border: 1px solid var(--settings-outline);
             color: var(--text-color);
@@ -252,8 +309,12 @@
             cursor: pointer;
             font-size: 14px;
         }
-        .theme-toggle-header-btn:hover {
+        .theme-toggle-header-btn:hover, .history-btn:hover {
              background-color: var(--settings-outline);
+        }
+        .history-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
         }
 
         .tab-bar {
@@ -273,7 +334,7 @@
             opacity: 0.7;
             font-family: var(--font-family);
             font-size: 14px;
-            margin-bottom: -1px; /* Aligns with the border-bottom of the bar */
+            margin-bottom: -1px;
         }
         .tab-link:hover {
             opacity: 1;
@@ -342,19 +403,65 @@
         .color-input-group {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            gap: 5px;
             margin-bottom: 8px;
         }
         
-        .color-input-group label {
+        .color-input-group > label {
             margin-bottom: 0;
         }
         
         .color-input-group input[type="color"] {
             margin-bottom: 0;
-            width: 60px;
-            padding: 1px 2px;
-            height: 24px;
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            border: 1px solid var(--settings-outline);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+         .color-input-group input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+         .color-input-group input[type="color"]::-webkit-color-swatch {
+            border: none;
+        }
+        .color-input-group input[type="color"]::-moz-color-swatch {
+            border: none;
+        }
+        
+        .color-pickers {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-grow: 1;
+            flex-wrap: wrap;
+        }
+
+        .color-pickers input[type="color"] {
+            cursor: pointer;
+        }
+        
+        #add-color-stop-btn {
+            padding: 4px 8px;
+            font-size: 16px;
+            line-height: 1;
+        }
+        
+        #color-stop-actions {
+            display: none;
+            position: fixed;
+            background: var(--settings-bg);
+            border: 1px solid var(--settings-outline);
+            z-index: 10020;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        #color-stop-actions button {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            padding: 4px 6px;
         }
 
         label {
@@ -383,6 +490,21 @@
             box-sizing: border-box;
             width: calc(100% - 12px);
             margin-bottom: 5px;
+        }
+        
+        .number-input-group {
+             display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .number-input-group label {
+            flex-basis: 50px;
+            margin-bottom: 0;
+        }
+         .number-input-group input[type="number"] {
+            flex-grow: 1;
+            margin-bottom: 0;
         }
 
         .slider-input-group {
@@ -414,6 +536,7 @@
         input[type="range"] {
             width: 40%;
             -webkit-appearance: none;
+            appearance: none;
             height: 3px;
             background: var(--slider-track);
             border-radius: 5px;
@@ -429,12 +552,20 @@
             background: var(--slider-thumb);
             cursor: pointer;
         }
+        input[type="range"]::-moz-range-thumb {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: var(--slider-thumb);
+            cursor: pointer;
+            border: none;
+        }
 
         input[type="checkbox"] {
             accent-color: var(--checkbox-color);
         }
 
-        #hide-frame-ui-button,
+        #toggle-view-button,
         #swap-panels-button {
             background-color: var(--button-bg);
             color: var(--button-text);
@@ -443,6 +574,10 @@
             cursor: pointer;
             font-family: var(--font-family);
             border-radius: var(--button-radius);
+        }
+        #toggle-view-button.active {
+            background-color: var(--frame-color);
+            color: var(--bg-color);
         }
 
         #swap-panels-button {
@@ -499,46 +634,26 @@
         .main-container.side-by-side-layout #swap-panels-button { display: inline-block; }
 
         @media (max-width: 767px), (max-width: 991px) and (orientation: portrait) {
-            .main-container {
-                padding: 10px;
-                flex-wrap: wrap;
-                align-items: flex-start;
-            }
-            .frame {
-                height: var(--frame-custom-size, 70vmin);
-                width: var(--frame-custom-size, 70vmin);
-            }
+            .main-container { padding: 10px; flex-wrap: wrap; align-items: flex-start; }
+            .frame { height: var(--frame-custom-size, 70vmin); width: var(--frame-custom-size, 70vmin); }
             .controls { justify-content: flex-start; }
-            #advanced-settings-panel {
-                width: 95vmin;
-                max-width: 500px;
-                max-height: 80vh;
-                position: static;
-                margin-top: 20px;
-                resize: none;
-                transform: none;
-            }
+            #advanced-settings-panel { width: 95vmin; max-width: 500px; max-height: 80vh; position: static; margin-top: 20px; resize: none; transform: none; }
             #advanced-settings-panel .drag-handle { display: none !important; }
-            .main-container.side-by-side-layout {
-                flex-direction: column;
-                gap: 15px;
-                padding: 10px;
-                align-items: center;
-                justify-content: flex-start;
-            }
+            .main-container.side-by-side-layout { flex-direction: column; gap: 15px; padding: 10px; align-items: center; justify-content: flex-start; }
             .main-container.side-by-side-layout .left-panel-wrapper,
-            .main-container.side-by-side-layout #advanced-settings-panel {
-                width: 95vw;
-                max-width: 500px;
-                min-width: unset;
-                flex: unset;
-            }
+            .main-container.side-by-side-layout #advanced-settings-panel { width: 95vw; max-width: 500px; min-width: unset; flex: unset; }
             .main-container.side-by-side-layout #advanced-settings-panel { resize: both; }
             .main-container.side-by-side-layout #advanced-settings-panel .drag-handle { display: block !important; }
         }
     </style>
 </head>
 <body>
+    <div id="dialogue-overlay" class="dialogue-overlay"></div>
+    <div id="color-stop-actions">
+        <button data-action="edit">Edit</button>
+        <button data-action="remove">Remove</button>
+    </div>
+    
     <div class="header">
         <button id="layout-button">Fit Layout</button>
         <button id="settings-button">Settings</button>
@@ -547,11 +662,16 @@
     <div class="main-container">
         <div class="left-panel-wrapper">
             <div class="frame">
-                <div class="action-buttons">
-                    <button id="fullscreen-button">Full</button>
+                <div id="dither-dialogue" class="dialogue">
+                    <div class="dialogue-header">•••</div>
+                    <div id="dither-dialogue-options" class="dialogue-options"></div>
                 </div>
-                <div class="fullscreen-bottom-left-controls" style="display: none;">
-                    <button id="hide-ui-button">Hide</button>
+                <div id="colormap-dialogue" class="dialogue">
+                    <div class="dialogue-header">•••</div>
+                    <div id="colormap-dialogue-options" class="dialogue-options"></div>
+                </div>
+                <div class="action-buttons">
+                    <button id="fullscreen-button">⛶</button>
                 </div>
                 <canvas id="pixel-canvas"></canvas>
             </div>
@@ -561,7 +681,7 @@
                 <button id="reset-button">Reset</button>
                 <button id="export-button">Save</button>
                 <button id="advanced-settings-button">Edit</button>
-                <button id="hide-frame-ui-button">⦸</button>
+                <button id="toggle-view-button">⦸</button>
                 <button id="swap-panels-button" style= "display:none"></button>
             </div>
         </div>
@@ -569,13 +689,17 @@
             <div class="settings-header">
                 <div id="drag-handle" class="drag-handle">✥</div>
                 <h3>Advanced Settings</h3>
-                <button id="theme-toggle-button" class="theme-toggle-header-btn">月</button>
+                <div class="header-controls">
+                    <button id="undo-button" class="history-btn">&lt;</button>
+                    <button id="redo-button" class="history-btn">&gt;</button>
+                    <button id="theme-toggle-button" class="theme-toggle-header-btn">月</button>
+                </div>
             </div>
             <div class="tab-bar">
                 <button class="tab-link active" data-tab="pixels">Pixels</button>
                 <button class="tab-link" data-tab="dither">Dither</button>
-                <button class="tab-link" data-tab="adjustments">Adjustments</button>
                 <button class="tab-link" data-tab="color">Color</button>
+                <button class="tab-link" data-tab="adjustments">Adjustments</button>
             </div>
             <div class="settings-content-scrollable">
                 <div id="tab-pixels" class="tab-content active">
@@ -583,8 +707,8 @@
                         <h4>Pixelation</h4>
                         <div class="slider-input-group">
                             <label for="pixel-size">Pixel Size:</label>
-                            <input type="range" id="pixel-size" min="1" max="100" step="1" value="8">
-                            <input type="number" id="pixel-size-num" min="1" max="100" step="1" value="8" class="slider-value-input">
+                            <input type="range" id="pixel-size" min="1" max="100" step="1" value="1">
+                            <input type="number" id="pixel-size-num" min="1" max="100" step="1" value="1" class="slider-value-input">
                         </div>
                     </div>
                 </div>
@@ -595,48 +719,60 @@
                            <input type="checkbox" id="dither-enable">
                            <label for="dither-enable">Enable Dither</label>
                         </div>
-                        <div class="slider-input-group">
-                            <label for="dither-threshold">Threshold:</label>
-                            <input type="range" id="dither-threshold" min="0" max="255" step="1" value="85">
-                            <input type="number" id="dither-threshold-num" min="0" max="255" step="1" value="85" class="slider-value-input">
-                        </div>
-                        <div class="slider-input-group">
-                            <label for="dither-size">Dither Size:</label>
-                            <input type="range" id="dither-size" min="1" max="25" step="1" value="7">
-                            <input type="number" id="dither-size-num" min="1" max="25" step="1" value="7" class="slider-value-input">
-                        </div>
-                        <div class="slider-input-group">
-                            <label for="dither-gap">Dither Gap:</label>
-                            <input type="range" id="dither-gap" min="0" max="10" step="1" value="1">
-                            <input type="number" id="dither-gap-num" min="0" max="10" step="1" value="1" class="slider-value-input">
-                        </div>
-                        <div class="color-input-group">
-                            <label for="dither-color">Dither Color:</label>
-                            <input type="color" id="dither-color" value="#000000">
+                        <div id="dither-controls" style="display: none;">
+                            <label>Algorithm: <button id="dither-selector" data-value="bayer" style="width: auto; padding: 2px 6px;">Bayer</button></label>
+                            <div id="dither-settings-modern">
+                                <div class="slider-input-group">
+                                    <label for="dither-strength">Strength:</label>
+                                    <input type="range" id="dither-strength" min="0" max="4" value="1" step="0.1">
+                                    <input type="number" id="dither-strength-num" min="0" max="4" value="1" step="0.1" class="slider-value-input">
+                                </div>
+                                <div id="dither-pattern-size-group" class="slider-input-group">
+                                    <label for="dither-pattern-size">Pattern Size:</label>
+                                    <input type="range" id="dither-pattern-size" min="1" max="16" value="1" step="1">
+                                    <input type="number" id="dither-pattern-size-num" min="1" max="16" value="1" step="1" class="slider-value-input">
+                                </div>
+                                <div class="slider-input-group">
+                                    <label for="color-levels">Color Levels:</label>
+                                    <input type="range" id="color-levels" min="2" max="16" value="4" step="1">
+                                    <input type="number" id="color-levels-num" min="2" max="16" value="4" step="1" class="slider-value-input">
+                                </div>
+                                <div>
+                                    <label>Color Map: <button id="colormap-selector" data-value="gradient" style="width: auto; padding: 2px 6px;">Gradient</button></label>
+                                    <div id="gradient-controls">
+                                        <div class="color-input-group">
+                                            <div class="color-pickers" id="gradient-color-stops">
+                                            </div>
+                                            <button id="add-color-stop-btn">+</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="dither-settings-legacy" style="display: none;">
+                                <div class="slider-input-group">
+                                    <label for="dither-threshold">Strength:</label>
+                                    <input type="range" id="dither-threshold" min="0" max="255" step="1" value="85">
+                                    <input type="number" id="dither-threshold-num" min="0" max="255" step="1" value="85" class="slider-value-input">
+                                </div>
+                                <div class="slider-input-group">
+                                    <label for="dither-size">Dither Size:</label>
+                                    <input type="range" id="dither-size" min="1" max="25" step="1" value="7">
+                                    <input type="number" id="dither-size-num" min="1" max="25" step="1" value="7" class="slider-value-input">
+                                </div>
+                                <div class="slider-input-group">
+                                    <label for="dither-gap">Dither Gap:</label>
+                                    <input type="range" id="dither-gap" min="0" max="10" step="1" value="1">
+                                    <input type="number" id="dither-gap-num" min="0" max="10" step="1" value="1" class="slider-value-input">
+                                </div>
+                                <div class="color-input-group">
+                                    <label for="dither-color">Dither Color:</label>
+                                    <input type="color" id="dither-color" value="#000000">
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div id="tab-adjustments" class="tab-content">
-                    <div class="setting-group">
-                        <h4>Adjustments</h4>
-                         <div class="slider-input-group">
-                            <label for="brightness">Brightness:</label>
-                            <input type="range" id="brightness" min="0" max="2" step="0.05" value="1">
-                            <input type="number" id="brightness-num" min="0" max="2" step="0.05" value="1" class="slider-value-input">
-                        </div>
-                        <div class="slider-input-group">
-                            <label for="contrast">Contrast:</label>
-                            <input type="range" id="contrast" min="0" max="4" step="0.1" value="1">
-                            <input type="number" id="contrast-num" min="0" max="4" step="0.1" value="1" class="slider-value-input">
-                        </div>
-                        <div class="slider-input-group">
-                            <label for="saturation">Saturation:</label>
-                            <input type="range" id="saturation" min="0" max="4" step="0.1" value="1">
-                            <input type="number" id="saturation-num" min="0" max="4" step="0.1" value="1" class="slider-value-input">
-                        </div>
-                    </div>
-                </div>
-                <div id="tab-color" class="tab-content">
+                 <div id="tab-color" class="tab-content">
                      <div class="setting-group">
                         <h4>Color Grading</h4>
                          <div class="slider-input-group">
@@ -677,6 +813,50 @@
                          <div class="checkbox-label-group">
                            <input type="checkbox" id="invert">
                            <label for="invert">Invert</label>
+                        </div>
+                    </div>
+                </div>
+                <div id="tab-adjustments" class="tab-content">
+                    <div class="setting-group">
+                        <h4>Adjustments</h4>
+                         <div class="slider-input-group">
+                            <label for="brightness">Brightness:</label>
+                            <input type="range" id="brightness" min="0" max="2" step="0.05" value="1">
+                            <input type="number" id="brightness-num" min="0" max="2" step="0.05" value="1" class="slider-value-input">
+                        </div>
+                        <div class="slider-input-group">
+                            <label for="contrast">Contrast:</label>
+                            <input type="range" id="contrast" min="0" max="4" step="0.1" value="1">
+                            <input type="number" id="contrast-num" min="0" max="4" step="0.1" value="1" class="slider-value-input">
+                        </div>
+                        <div class="slider-input-group">
+                            <label for="saturation">Saturation:</label>
+                            <input type="range" id="saturation" min="0" max="4" step="0.1" value="1">
+                            <input type="number" id="saturation-num" min="0" max="4" step="0.1" value="1" class="slider-value-input">
+                        </div>
+                        <div class="slider-input-group">
+                           <label for="bloom">Bloom:</label>
+                           <input type="range" id="bloom" min="0" max="20" step="1" value="0">
+                           <input type="number" id="bloom-num" min="0" max="20" step="1" value="0" class="slider-value-input">
+                       </div>
+                    </div>
+                     <div class="setting-group">
+                        <h4>Experimental</h4>
+                        <div class="checkbox-label-group">
+                           <input type="checkbox" id="experimental-enable">
+                           <label for="experimental-enable">Manual resolution</label>
+                        </div>
+                        <div id="experimental-controls" style="display:none;">
+                            <div class="checkbox-label-group">
+                               <input type="checkbox" id="resolution-sync">
+                               <label for="resolution-sync">Sync</label>
+                            </div>
+                            <div class="number-input-group">
+                                <label for="resolution-width">Width:</label>
+                                <input type="number" id="resolution-width" min="1">
+                                <label for="resolution-height">Height:</label>
+                                <input type="number" id="resolution-height" min="1">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -741,7 +921,6 @@
             const frame = document.querySelector('.frame');
             const pixelCanvas = document.getElementById('pixel-canvas');
             const ctx = pixelCanvas.getContext('2d');
-            
             const themeToggleButton = document.getElementById('theme-toggle-button');
             const settingsButton = document.getElementById('settings-button');
             const advancedSettingsButton = document.getElementById('advanced-settings-button');
@@ -754,469 +933,189 @@
             const applySettingsBtn = document.getElementById('apply-settings-button');
             const resetThemeButton = document.getElementById('reset-theme-button');
             const fullscreenButton = document.getElementById('fullscreen-button');
-            const hideUiButton = document.getElementById('hide-ui-button');
-            const hideFrameUiButton = document.getElementById('hide-frame-ui-button');
-            
+            const toggleViewButton = document.getElementById('toggle-view-button');
+            const undoButton = document.getElementById('undo-button');
+            const redoButton = document.getElementById('redo-button');
+            const dialogueOverlay = document.getElementById('dialogue-overlay');
             const settingsPanel = document.getElementById('settings-panel');
             const advancedSettingsPanel = document.getElementById('advanced-settings-panel');
             const dragHandle = document.getElementById('drag-handle');
-            const fullscreenBottomLeftControls = document.querySelector('.fullscreen-bottom-left-controls');
             const imageInput = document.getElementById('image-input');
-            const pixelArtSettingsInputs = document.querySelectorAll('#advanced-settings-panel input, #advanced-settings-panel select');
-            const generalSettingsInputs = document.querySelectorAll('#settings-panel input, #settings-panel select');
-            
+            const pixelArtSettingsInputs = document.querySelectorAll('#advanced-settings-panel input, #advanced-settings-panel select, #advanced-settings-panel button');
             let originalImage = null;
+            let originalImageAspectRatio = 1;
+            let originalFileName = 'image';
+            let showOriginal = false;
             let isAdvancedPanelManuallyHidden = false;
             let isManualLayoutEnabled = false;
             let isDarkTheme = true;
             let dragState = { active: false, currentX: 0, currentY: 0, initialX: 0, initialY: 0, xOffset: 0, yOffset: 0 };
-
-            const themes = {
-                dark: {
-                    '--bg-color': '#000000', '--frame-color': '#ffffff', '--text-color': '#ffffff',
-                    '--button-bg': '#111111', '--button-text': '#ffffff', '--settings-bg': '#0a0a0a',
-                    '--settings-outline': '#555555', '--slider-track': '#555555', '--slider-thumb': '#ffffff',
-                    '--checkbox-color': '#333333', '--number-input-bg': '#000000', '--number-input-outline-color': '#555555'
-                },
-                light: {
-                    '--bg-color': '#f0f0f0', '--frame-color': '#000000', '--text-color': '#000000',
-                    '--button-bg': '#ffffff', '--button-text': '#000000', '--settings-bg': '#ffffff',
-                    '--settings-outline': '#cccccc', '--slider-track': '#cccccc', '--slider-thumb': '#000000',
-                    '--checkbox-color': '#aaaaaa', '--number-input-bg': '#ffffff', '--number-input-outline-color': '#cccccc'
-                }
+            let history = [];
+            let historyIndex = -1;
+            let gradientColors = ['#000000', '#FFFFFF'];
+            let activeColorStop = null;
+            let isUpdatingResolution = false;
+            const ditherMatrices = {
+                bayer: [ [ 0, 8, 2, 10 ], [ 12, 4, 14, 6 ], [ 3, 11, 1, 9 ], [ 15, 7, 13, 5 ] ],
+                crosshatch: [ [ 12, 5, 6, 13 ], [ 4, 11, 10, 7 ], [ 8, 9, 3, 0 ], [ 1, 2, 15, 14 ] ]
             };
-
-            themeToggleButton.addEventListener('click', toggleTheme);
-            settingsButton.addEventListener('click', () => togglePanel(settingsPanel));
-            advancedSettingsButton.addEventListener('click', () => togglePanel(advancedSettingsPanel));
-            layoutButton.addEventListener('click', toggleManualLayout);
-            uploadButton.addEventListener('click', () => imageInput.click());
-            imageInput.addEventListener('change', handleFileUpload);
-            clearButton.addEventListener('click', clearCanvas);
-            resetButton.addEventListener('click', factoryReset);
-            exportButton.addEventListener('click', exportAsPng);
-            applySettingsBtn.addEventListener('click', () => applyGeneralSettings(true));
-            resetThemeButton.addEventListener('click', resetTheme);
-            swapPanelsButton.addEventListener('click', () => mainContainer.classList.toggle('swapped'));
-            hideFrameUiButton.addEventListener('click', () => frame.classList.toggle('ui-hidden'));
-            fullscreenButton.addEventListener('click', toggleFullscreen);
-            hideUiButton.addEventListener('click', () => frame.classList.toggle('ui-hidden'));
+            const themes = {
+                dark: {'--bg-color':'#000000','--frame-color':'#ffffff','--text-color':'#ffffff','--button-bg':'#111111','--button-text':'#ffffff','--settings-bg':'#0a0a0a','--settings-outline':'#555555','--slider-track':'#555555','--slider-thumb':'#ffffff','--checkbox-color':'#333333','--number-input-bg':'#000000','--number-input-outline-color':'#555555'},
+                light: {'--bg-color':'#f0f0f0','--frame-color':'#000000','--text-color':'#000000','--button-bg':'#ffffff','--button-text':'#000000','--settings-bg':'#ffffff','--settings-outline':'#cccccc','--slider-track':'#cccccc','--slider-thumb':'#000000','--checkbox-color':'#aaaaaa','--number-input-bg':'#ffffff','--number-input-outline-color':'#cccccc'}
+            };
             
-            pixelArtSettingsInputs.forEach(input => {
-                input.addEventListener('input', () => { if (originalImage) renderPixelatedImage(); });
-            });
-
-            document.querySelectorAll('.slider-input-group').forEach(group => {
-                const slider = group.querySelector('input[type="range"]');
-                const number = group.querySelector('input[type="number"]');
-                if (slider && number) {
-                    slider.addEventListener('input', () => number.value = slider.value);
-                    number.addEventListener('input', () => slider.value = number.value);
-                }
-            });
-
-            window.addEventListener('resize', checkLayout);
-            document.addEventListener('click', closePanelsOnClickOutside);
-            dragHandle.addEventListener('mousedown', dragStart);
-            dragHandle.addEventListener('touchstart', dragStart);
-            
-            // Tabbed settings
-            const tabLinks = document.querySelectorAll('.tab-link');
-            const tabContents = document.querySelectorAll('.tab-content');
-
-            tabLinks.forEach(link => {
-                link.addEventListener('click', () => {
-                    const tabId = link.getAttribute('data-tab');
-
-                    tabLinks.forEach(btn => btn.classList.remove('active'));
-                    tabContents.forEach(content => content.classList.remove('active'));
-
-                    link.classList.add('active');
-                    document.getElementById('tab-' + tabId).classList.add('active');
+            function setupEventListeners() {
+                themeToggleButton.addEventListener('click', toggleTheme);
+                settingsButton.addEventListener('click', () => togglePanel(settingsPanel));
+                advancedSettingsButton.addEventListener('click', () => togglePanel(advancedSettingsPanel));
+                layoutButton.addEventListener('click', toggleManualLayout);
+                uploadButton.addEventListener('click', () => imageInput.click());
+                imageInput.addEventListener('change', (e) => handleFileUpload(e.target.files[0]));
+                clearButton.addEventListener('click', clearCanvas);
+                resetButton.addEventListener('click', factoryReset);
+                exportButton.addEventListener('click', exportAsPng);
+                applySettingsBtn.addEventListener('click', () => applyGeneralSettings(true));
+                resetThemeButton.addEventListener('click', resetTheme);
+                swapPanelsButton.addEventListener('click', () => mainContainer.classList.toggle('swapped'));
+                toggleViewButton.addEventListener('click', toggleOriginalView);
+                fullscreenButton.addEventListener('click', toggleFullscreen);
+                undoButton.addEventListener('click', undo);
+                redoButton.addEventListener('click', redo);
+                let renderTimeout;
+                pixelArtSettingsInputs.forEach(input => {
+                    if (input.closest('.dialogue, #color-stop-actions') || ['add-color-stop-btn', 'dither-selector', 'colormap-selector'].includes(input.id)) return;
+                    const eventType = (input.type === 'range' || input.type === 'color') ? 'input' : 'change';
+                    input.addEventListener(eventType, () => {
+                         clearTimeout(renderTimeout);
+                         renderTimeout = setTimeout(() => {
+                             if (originalImage) renderPixelatedImage().then(() => { if(eventType === 'change') saveState(); });
+                         }, 20);
+                    });
+                    if (input.type === 'range') input.addEventListener('change', () => { if (originalImage) saveState(); });
                 });
-            });
-
-            loadSettings();
-            checkLayout();
-
-            function handleFileUpload(event) {
-                const file = event.target.files[0];
-                if (!file) return;
+                document.querySelectorAll('.slider-input-group').forEach(group => {
+                    const slider = group.querySelector('input[type="range"]');
+                    const number = group.querySelector('input[type="number"]');
+                    if (slider && number) {
+                        slider.addEventListener('input', () => number.value = slider.value);
+                        number.addEventListener('input', () => slider.value = number.value);
+                    }
+                });
+                window.addEventListener('resize', checkLayout);
+                document.addEventListener('click', closePanelsOnClickOutside);
+                dragHandle.addEventListener('mousedown', dragStart);
+                dragHandle.addEventListener('touchstart', dragStart);
+                document.addEventListener('keydown', e => {
+                    if (e.key === 'Escape' && frame.classList.contains('fullscreen-active')) toggleFullscreen();
+                    const isCtrl = e.ctrlKey || e.metaKey;
+                    if (isCtrl && e.key === 'z') { e.preventDefault(); if (e.shiftKey) { redo(); } else { undo(); } }
+                    if (isCtrl && e.key === 'y') { e.preventDefault(); redo(); }
+                });
+                frame.addEventListener('dragover', e => { e.preventDefault(); frame.classList.add('dragover'); });
+                frame.addEventListener('dragleave', e => { e.preventDefault(); frame.classList.remove('dragover'); });
+                frame.addEventListener('drop', e => { e.preventDefault(); frame.classList.remove('dragover'); if (e.dataTransfer.files.length > 0) handleFileUpload(e.dataTransfer.files[0]); });
+                document.querySelectorAll('.tab-link').forEach(link => { link.addEventListener('click', () => { document.querySelectorAll('.tab-link').forEach(btn => btn.classList.remove('active')); document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active')); link.classList.add('active'); document.getElementById('tab-' + link.dataset.tab).classList.add('active'); }); });
+                document.getElementById('dither-enable').addEventListener('change', (e) => { document.getElementById('dither-controls').style.display = e.target.checked ? 'block' : 'none'; });
+                document.getElementById('experimental-enable').addEventListener('change', e => { document.getElementById('experimental-controls').style.display = e.target.checked ? 'block' : 'none'; if(originalImage) renderPixelatedImage().then(saveState); });
+                setupDialogue('dither', ['Bayer', 'Crosshatch', 'Halftone', 'Contour', 'Legacy'], (val) => { updateDitherUI(val); renderPixelatedImage().then(saveState); });
+                setupDialogue('colormap', ['Gradient', 'Auto'], (val) => { document.getElementById('gradient-controls').style.display = val === 'gradient' ? 'block' : 'none'; renderPixelatedImage().then(saveState); });
+                document.getElementById('add-color-stop-btn').addEventListener('click', () => { gradientColors.push('#ffffff'); renderGradientStops(); renderPixelatedImage().then(saveState); });
+                document.getElementById('color-stop-actions').addEventListener('click', (e) => {
+                    if (!activeColorStop) return;
+                    if (e.target.dataset.action === 'edit') {
+                        activeColorStop.click();
+                    } else if (e.target.dataset.action === 'remove' && gradientColors.length > 1) {
+                        gradientColors.splice(parseInt(activeColorStop.dataset.index, 10), 1);
+                        renderGradientStops();
+                        renderPixelatedImage().then(saveState);
+                    }
+                    closeAllDialogues();
+                });
+                dialogueOverlay.addEventListener('click', closeAllDialogues);
+                const resW = document.getElementById('resolution-width'), resH = document.getElementById('resolution-height');
+                resW.addEventListener('input', () => { if(document.getElementById('resolution-sync').checked && !isUpdatingResolution) { isUpdatingResolution = true; resH.value = Math.round(resW.value / originalImageAspectRatio); isUpdatingResolution = false; }});
+                resH.addEventListener('input', () => { if(document.getElementById('resolution-sync').checked && !isUpdatingResolution) { resW.value = Math.round(resH.value * originalImageAspectRatio); }});
+            }
+            function setupDialogue(name, options, callback) {
+                const dialogue = document.getElementById(`${name}-dialogue`), optionsContainer = document.getElementById(`${name}-dialogue-options`), selector = document.getElementById(`${name}-selector`);
+                optionsContainer.innerHTML = '';
+                options.forEach(opt => {
+                    const btn = document.createElement('button'); btn.textContent = opt; const value = opt.toLowerCase();
+                    btn.dataset.value = value; btn.addEventListener('click', () => { selector.textContent = opt; selector.dataset.value = value; closeAllDialogues(); if (callback) callback(value); });
+                    optionsContainer.appendChild(btn);
+                });
+                selector.addEventListener('click', () => {
+                    const currentVal = selector.dataset.value; optionsContainer.querySelectorAll('button').forEach(btn => btn.classList.toggle('active', btn.dataset.value === currentVal));
+                    dialogueOverlay.style.display = 'block'; dialogue.style.display = 'block';
+                });
+            }
+            function closeAllDialogues() { dialogueOverlay.style.display = 'none'; document.querySelectorAll('.dialogue, #color-stop-actions').forEach(d => d.style.display = 'none'); }
+            function updateDitherUI(algorithm) {
+                const modern = document.getElementById('dither-settings-modern'), legacy = document.getElementById('dither-settings-legacy'), pattern = document.getElementById('dither-pattern-size-group');
+                modern.style.display = algorithm !== 'legacy' ? 'block' : 'none';
+                legacy.style.display = algorithm === 'legacy' ? 'block' : 'none';
+                pattern.style.display = ['bayer', 'crosshatch'].includes(algorithm) ? 'flex' : 'none';
+            }
+            function renderGradientStops() {
+                const container = document.getElementById('gradient-color-stops'); container.innerHTML = '';
+                gradientColors.forEach((color, index) => {
+                    const colorInput = document.createElement('input'); colorInput.type = 'color'; colorInput.value = color; colorInput.dataset.index = index; let inputTimeout;
+                    colorInput.addEventListener('input', e => { gradientColors[index] = e.target.value; clearTimeout(inputTimeout); inputTimeout = setTimeout(() => renderPixelatedImage(), 20); });
+                    colorInput.addEventListener('change', () => renderPixelatedImage().then(saveState));
+                    colorInput.addEventListener('click', e => {
+                        e.preventDefault(); activeColorStop = e.target;
+                        const actionsPopup = document.getElementById('color-stop-actions');
+                        dialogueOverlay.style.display = 'block'; actionsPopup.style.display = 'block';
+                        actionsPopup.style.left = `${e.clientX}px`; actionsPopup.style.top = `${e.clientY}px`;
+                    }); container.appendChild(colorInput);
+                });
+            }
+            function handleFileUpload(file) {
+                if (!file || !file.type.startsWith('image/')) return;
+                originalFileName = file.name.split('.').slice(0, -1).join('.') || 'image';
                 const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = new Image();
-                    img.onload = function() {
-                        originalImage = img;
-                        renderPixelatedImage();
-                    };
-                    img.src = e.target.result;
-                };
+                reader.onload = e => { const img = new Image(); img.onload = () => { originalImage = img; originalImageAspectRatio = img.width/img.height; history=[];historyIndex=-1; resetAdvancedSettings(); renderPixelatedImage().then(saveState);}; img.src = e.target.result; };
                 reader.readAsDataURL(file);
             }
-            
             function getPixelArtSettings() {
-                const getVal = (id) => parseFloat(document.getElementById(id).value);
-                const getCheck = (id) => document.getElementById(id).checked;
-                const getStr = (id) => document.getElementById(id).value;
-                return {
-                    pixelSize: getVal('pixel-size'),
-                    brightness: getVal('brightness'),
-                    contrast: getVal('contrast'),
-                    saturation: getVal('saturation'),
-                    sharpness: getVal('sharpness'),
-                    blur: getVal('blur'),
-                    sepia: getVal('sepia'),
-                    temperature: getVal('temperature'),
-                    hueRotate: getVal('hue-rotate'),
-                    grayscale: getCheck('grayscale') ? 1 : 0,
-                    invert: getCheck('invert') ? 1 : 0,
-                    ditherEnable: getCheck('dither-enable'),
-                    ditherThreshold: getVal('dither-threshold'),
-                    ditherSize: getVal('dither-size'),
-                    ditherGap: getVal('dither-gap'),
-                    ditherColor: getStr('dither-color'),
-                };
+                const getV=id=>parseFloat(document.getElementById(id).value), getC=id=>document.getElementById(id).checked, getD=id=>document.getElementById(id).dataset.value;
+                return { pixelSize: getV('pixel-size'), brightness:getV('brightness'), contrast:getV('contrast'), saturation:getV('saturation'), sharpness:getV('sharpness'), blur:getV('blur'), sepia:getV('sepia'), temperature:getV('temperature'), hueRotate:getV('hue-rotate'), grayscale:getC('grayscale'), invert:getC('invert'), ditherEnable:getC('dither-enable'), ditherAlgorithm:getD('dither-selector')||'bayer', ditherStrength:getV('dither-strength'), colorLevels:getV('color-levels'), colorMap:getD('colormap-selector')||'gradient', gradientColors:[...gradientColors], ditherThreshold:getV('dither-threshold'), ditherSize:getV('dither-size'), ditherGap:getV('dither-gap'), ditherColor:document.getElementById('dither-color').value, bloom:getV('bloom'), ditherPatternSize:getV('dither-pattern-size'), experimentalEnable:getC('experimental-enable'), resolutionWidth:getV('resolution-width'), resolutionHeight:getV('resolution-height'), resolutionSync:getC('resolution-sync') };
             }
-
-            function hexToRgb(hex) {
-                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-                return result ? [
-                    parseInt(result[1], 16),
-                    parseInt(result[2], 16),
-                    parseInt(result[3], 16)
-                ] : [0, 0, 0];
-            }
-
-            function renderPixelatedImage() {
-                if (!originalImage) return;
-                const settings = getPixelArtSettings();
-                const w = originalImage.width;
-                const h = originalImage.height;
-
-                const tempCanvas = document.createElement('canvas');
-                const tempCtx = tempCanvas.getContext('2d');
-                
-                const pixelatedWidth = Math.max(1, w / settings.pixelSize);
-                const pixelatedHeight = Math.max(1, h / settings.pixelSize);
-                
-                tempCanvas.width = pixelatedWidth;
-                tempCanvas.height = pixelatedHeight;
-                
-                const filterString = `brightness(${settings.brightness}) contrast(${settings.contrast * (1 + settings.sharpness / 2)}) saturate(${settings.saturation}) grayscale(${settings.grayscale}) sepia(${settings.sepia}) invert(${settings.invert}) hue-rotate(${settings.hueRotate}deg) blur(${settings.blur}px)`;
-                tempCtx.filter = filterString;
-                
-                tempCtx.drawImage(originalImage, 0, 0, pixelatedWidth, pixelatedHeight);
-
-                if (settings.temperature !== 0) {
-                    const tempValue = settings.temperature / 100;
-                    tempCtx.globalCompositeOperation = 'overlay';
-                    if (tempValue > 0) { // Warm
-                        tempCtx.fillStyle = `rgba(255, 150, 0, ${tempValue})`;
-                    } else { // Cool
-                        tempCtx.fillStyle = `rgba(0, 150, 255, ${-tempValue})`;
-                    }
-                    tempCtx.fillRect(0, 0, pixelatedWidth, pixelatedHeight);
-                    tempCtx.globalCompositeOperation = 'source-over';
-                }
-
-                pixelCanvas.width = w;
-                pixelCanvas.height = h;
-
-                ctx.imageSmoothingEnabled = false;
-                ctx.mozImageSmoothingEnabled = false;
-                ctx.webkitImageSmoothingEnabled = false;
-                ctx.msImageSmoothingEnabled = false;
-                
-                ctx.drawImage(tempCanvas, 0, 0, pixelatedWidth, pixelatedHeight, 0, 0, w, h);
-
-                if (settings.ditherEnable && settings.ditherSize > 0) {
-                    const imageData = ctx.getImageData(0, 0, w, h);
-                    const data = imageData.data;
-                    const [ditherR, ditherG, ditherB] = hexToRgb(settings.ditherColor);
-                    const totalPatternSize = settings.ditherSize + settings.ditherGap;
-
-                    for (let i = 0; i < data.length; i += 4) {
-                        const r = data[i];
-                        const g = data[i + 1];
-                        const b = data[i + 2];
-                        const brightness = (r + g + b) / 3;
-
-                        if (brightness < settings.ditherThreshold) {
-                            const y = Math.floor((i / 4) / w);
-                            const x = (i / 4) % w;
-
-                            const checkX = Math.floor(x / totalPatternSize);
-                            const checkY = Math.floor(y / totalPatternSize);
-                            const inX = x % totalPatternSize;
-                            const inY = y % totalPatternSize;
-
-                            if ( (checkX + checkY) % 2 === 0 && inX < settings.ditherSize && inY < settings.ditherSize ) {
-                                data[i] = ditherR;
-                                data[i + 1] = ditherG;
-                                data[i + 2] = ditherB;
-                                data[i + 3] = 255;
-                            }
-                        }
-                    }
-                    ctx.putImageData(imageData, 0, 0);
-                }
-            }
-            
-            function clearCanvas() {
-                ctx.clearRect(0, 0, pixelCanvas.width, pixelCanvas.height);
-                imageInput.value = ''; 
-                originalImage = null;
-            }
-
-            function resetAdvancedSettings() {
-                document.getElementById('pixel-size').value = 8;
-                document.getElementById('pixel-size-num').value = 8;
-                document.getElementById('brightness').value = 1;
-                document.getElementById('brightness-num').value = 1;
-                document.getElementById('contrast').value = 1;
-                document.getElementById('contrast-num').value = 1;
-                document.getElementById('saturation').value = 1;
-                document.getElementById('saturation-num').value = 1;
-                document.getElementById('sharpness').value = 0;
-                document.getElementById('sharpness-num').value = 0;
-                document.getElementById('blur').value = 0;
-                document.getElementById('blur-num').value = 0;
-                document.getElementById('sepia').value = 0;
-                document.getElementById('sepia-num').value = 0;
-                document.getElementById('temperature').value = 0;
-                document.getElementById('temperature-num').value = 0;
-                document.getElementById('hue-rotate').value = 0;
-                document.getElementById('hue-rotate-num').value = 0;
-                document.getElementById('grayscale').checked = false;
-                document.getElementById('invert').checked = false;
-                
-                document.getElementById('dither-enable').checked = false;
-                document.getElementById('dither-threshold').value = 85;
-                document.getElementById('dither-threshold-num').value = 85;
-                document.getElementById('dither-size').value = 1;
-                document.getElementById('dither-size-num').value = 1;
-                document.getElementById('dither-gap').value = 1;
-                document.getElementById('dither-gap-num').value = 1;
-                document.getElementById('dither-color').value = '#000000';
-
-                if (originalImage) {
-                    renderPixelatedImage();
-                }
-            }
-            
-            function factoryReset() {
-                if (confirm('Are you sure you want to reset all settings? This will clear saved preferences and reload the page.')) {
-                    localStorage.clear();
-                    location.reload();
-                }
-            }
-            
-            function exportAsPng() {
-                if (!originalImage) return;
-                const link = document.createElement('a');
-                link.download = 'pixel-art.png';
-                link.href = pixelCanvas.toDataURL('image/png');
-                link.click();
-            }
-            
-            function toggleTheme() {
-                isDarkTheme = !isDarkTheme;
-                applyTheme(isDarkTheme ? themes.dark : themes.light);
-                saveSettings();
-            }
-            
-            function resetTheme() {
-                applyTheme(isDarkTheme ? themes.dark : themes.light);
-                saveSettings();
-            }
-
-            function applyTheme(theme) {
-                const root = document.documentElement;
-                for (const [key, value] of Object.entries(theme)) {
-                    root.style.setProperty(key, value);
-                    const inputId = key.substring(2);
-                    const inputEl = document.getElementById(inputId);
-                    if (inputEl && inputEl.type === 'color') {
-                        inputEl.value = value;
-                    }
-                }
-            }
-            
-            function applyGeneralSettings(save = true) {
-                const root = document.documentElement;
-                generalSettingsInputs.forEach(input => {
-                    if (input.id) {
-                        const variableName = '--' + input.id;
-                        let value = input.value;
-                        if (input.type === 'number' && !input.id.includes('in-frame-ui-scale')) {
-                            value += 'px';
-                        }
-                        root.style.setProperty(variableName, value);
-                    }
-                });
-                if (save) saveSettings();
-            }
-
-            function saveSettings() {
-                const settings = {};
-                document.querySelectorAll('input, select').forEach(el => {
-                    if (el.id) settings[el.id] = el.type === 'checkbox' ? el.checked : el.value;
-                });
-                localStorage.setItem('pixelArtGeneratorSettingsV4', JSON.stringify(settings));
-                localStorage.setItem('pixelArtTheme', isDarkTheme ? 'dark' : 'light');
-                localStorage.setItem('isManualLayoutEnabled', isManualLayoutEnabled);
-                localStorage.setItem('mainContainerLayoutClass', mainContainer.classList.contains('side-by-side-layout') ? 'side-by-side-layout' : '');
-            }
-
-            function loadSettings() {
-                const savedTheme = localStorage.getItem('pixelArtTheme');
-                isDarkTheme = (savedTheme === 'light') ? false : true;
-                applyTheme(isDarkTheme ? themes.dark : themes.light);
-                
-                const settings = JSON.parse(localStorage.getItem('pixelArtGeneratorSettingsV4'));
-                if (settings) {
-                    document.querySelectorAll('input, select').forEach(el => {
-                        if (el.id && settings[el.id] !== undefined) {
-                            if (el.type === 'checkbox') el.checked = settings[el.id];
-                            else el.value = settings[el.id];
-                        }
-                    });
-                }
-                
-                applyGeneralSettings(false); // Apply loaded settings without re-saving
-                
-                isManualLayoutEnabled = (localStorage.getItem('isManualLayoutEnabled') === 'true');
-                if (localStorage.getItem('mainContainerLayoutClass') === 'side-by-side-layout') {
-                    mainContainer.classList.add('side-by-side-layout');
-                    advancedSettingsPanel.style.display = 'block';
-                    settingsPanel.style.display = 'none';
-                    isAdvancedPanelManuallyHidden = false;
-                } else {
-                    mainContainer.classList.remove('side-by-side-layout');
-                }
-            }
-
-            function togglePanel(panelToToggle) {
-                const isAdvancedPanel = panelToToggle.id === 'advanced-settings-panel';
-                if (panelToToggle.style.display === 'block') {
-                    panelToToggle.style.display = 'none';
-                    if (isAdvancedPanel) isAdvancedPanelManuallyHidden = true;
-                } else {
-                    panelToToggle.style.display = 'block';
-                    if (isAdvancedPanel) {
-                        settingsPanel.style.display = 'none';
-                        isAdvancedPanelManuallyHidden = false;
-                    } else {
-                        advancedSettingsPanel.style.display = 'none';
-                    }
-                }
-            }
-
-            function closePanelsOnClickOutside(event) {
-                if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'SELECT') return;
-                if (settingsPanel.style.display === 'block' && !settingsPanel.contains(event.target) && event.target !== settingsButton) {
-                    settingsPanel.style.display = 'none';
-                }
-            }
-
-            function toggleManualLayout() {
-                isManualLayoutEnabled = !isManualLayoutEnabled;
-                if (isManualLayoutEnabled) {
-                    mainContainer.classList.add('side-by-side-layout');
-                    advancedSettingsPanel.style.display = 'block';
-                    advancedSettingsPanel.style.transform = 'translate3d(0, 0, 0)';
-                    dragState.xOffset = 0;
-                    dragState.yOffset = 0;
-                    isAdvancedPanelManuallyHidden = false;
-                    settingsPanel.style.display = 'none';
-                } else {
-                    mainContainer.classList.remove('side-by-side-layout');
-                    advancedSettingsPanel.style.display = 'none';
-                    isAdvancedPanelManuallyHidden = true;
-                    advancedSettingsPanel.style.transform = 'none';
-                    dragState.xOffset = 0;
-                    dragState.yOffset = 0;
-                }
-                saveSettings();
-            }
-
-            function checkLayout() {
-                if (isManualLayoutEnabled) {
-                    if (mainContainer.classList.contains('side-by-side-layout')) {
-                        advancedSettingsPanel.style.display = 'block';
-                        settingsPanel.style.display = 'none';
-                    } else {
-                        advancedSettingsPanel.style.display = 'none';
-                        isAdvancedPanelManuallyHidden = true;
-                    }
-                    return;
-                }
-                const shouldBeSideBySide = window.innerWidth >= 992 || (window.innerWidth >= 768 && window.matchMedia("(orientation: landscape)").matches);
-                if (shouldBeSideBySide) {
-                    mainContainer.classList.add('side-by-side-layout');
-                    if (!isAdvancedPanelManuallyHidden) advancedSettingsPanel.style.display = 'block';
-                    settingsPanel.style.display = 'none';
-                } else {
-                    mainContainer.classList.remove('side-by-side-layout');
-                    if (advancedSettingsPanel.style.display === 'none') {
-                        isAdvancedPanelManuallyHidden = true;
-                    }
-                }
-                if (!mainContainer.classList.contains('side-by-side-layout')) {
-                    advancedSettingsPanel.style.transform = 'none';
-                    dragState.xOffset = 0;
-                    dragState.yOffset = 0;
-                }
-            }
-            
-            function toggleFullscreen() {
-                frame.classList.toggle('fullscreen-active');
-                fullscreenButton.textContent = frame.classList.contains('fullscreen-active') ? 'Exit' : 'Full';
-                fullscreenBottomLeftControls.style.display = frame.classList.contains('fullscreen-active') ? 'flex' : 'none';
-            }
-
-            function getTranslateXY(elm) {
-                const style = window.getComputedStyle(elm);
-                const matrix = new DOMMatrixReadOnly(style.transform);
-                return { x: matrix.m41, y: matrix.m42 };
-            }
-
-            function dragStart(e) {
-                if (!mainContainer.classList.contains('side-by-side-layout') || advancedSettingsPanel.style.display === 'none') return;
-                const currentTransform = getTranslateXY(advancedSettingsPanel);
-                dragState.xOffset = currentTransform.x;
-                dragState.yOffset = currentTransform.y;
-                dragState.initialX = (e.type === 'touchstart' ? e.touches[0].clientX : e.clientX) - dragState.xOffset;
-                dragState.initialY = (e.type === 'touchstart' ? e.touches[0].clientY : e.clientY) - dragState.yOffset;
-                if (e.target === dragHandle) {
-                    dragState.active = true;
-                    document.body.style.cursor = 'grabbing';
-                    document.addEventListener('mouseup', dragEnd);
-                    document.addEventListener('touchend', dragEnd);
-                    document.addEventListener('mousemove', drag);
-                    document.addEventListener('touchmove', drag);
-                }
-            }
-            
-            function dragEnd() {
-                dragState.active = false;
-                document.body.style.cursor = '';
-                document.removeEventListener('mouseup', dragEnd);
-                document.removeEventListener('touchend', dragEnd);
-                document.removeEventListener('mousemove', drag);
-                document.removeEventListener('touchmove', drag);
-            }
-            
-            function drag(e) {
-                if (dragState.active) {
-                    e.preventDefault();
-                    let clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
-                    let clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
-                    dragState.currentX = clientX - dragState.initialX;
-                    dragState.currentY = clientY - dragState.initialY;
-                    advancedSettingsPanel.style.transform = `translate3d(${dragState.currentX}px, ${dragState.currentY}px, 0)`;
-                }
-            }
+            function hexToRgb(h){if(!h)return{r:0,g:0,b:0};const r=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h);return r?{r:parseInt(r[1],16),g:parseInt(r[2],16),b:parseInt(r[3],16)}:{r:0,g:0,b:0};}
+            function lerpColor(a,b,amt){return{r:a.r+amt*(b.r-a.r),g:a.g+amt*(b.g-a.g),b:a.b+amt*(b.b-a.b)};}
+            function getColorFromGradient(cs,amt){const sc=cs.length-1;if(sc<=0)return hexToRgb(cs[0]||'#000');const sa=amt*sc,si=Math.floor(sa),la=sa-si;const sC=hexToRgb(cs[Math.min(sc,si)]),eC=hexToRgb(cs[Math.min(sc,si+1)]);return lerpColor(sC,eC,la);}
+            async function renderPixelatedImage(){return new Promise(resolve=>{if(!originalImage)return resolve();if(showOriginal){pixelCanvas.width=originalImage.width;pixelCanvas.height=originalImage.height;ctx.clearRect(0,0,pixelCanvas.width,pixelCanvas.height);ctx.drawImage(originalImage,0,0);return resolve();}const s=getPixelArtSettings();let sourceCanvas=originalImage,finalW=originalImage.width,finalH=originalImage.height;if(s.experimentalEnable&&s.resolutionWidth>0&&s.resolutionHeight>0){finalW=s.resolutionWidth;finalH=s.resolutionHeight;const resCanvas=document.createElement('canvas');resCanvas.width=finalW;resCanvas.height=finalH;resCanvas.getContext('2d').drawImage(originalImage,0,0,finalW,finalH);sourceCanvas=resCanvas;}const tempCanvas=document.createElement('canvas'),tempCtx=tempCanvas.getContext('2d');const pixW=Math.max(1,Math.round(finalW/s.pixelSize)),pixH=Math.max(1,Math.round(finalH/s.pixelSize));tempCanvas.width=pixW;tempCanvas.height=pixH;tempCtx.filter=`brightness(${s.brightness}) contrast(${s.contrast*(1+s.sharpness/2)}) saturate(${s.saturation}) grayscale(${s.grayscale?1:0}) sepia(${s.sepia}) invert(${s.invert?1:0}) hue-rotate(${s.hueRotate}deg) blur(${s.blur}px)`;tempCtx.drawImage(sourceCanvas,0,0,pixW,pixH);if(s.temperature!==0){const val=s.temperature/100;tempCtx.globalCompositeOperation='overlay';tempCtx.fillStyle=val>0?`rgba(255,150,0,${val})`:`rgba(0,150,255,${-val})`;tempCtx.fillRect(0,0,pixW,pixH);tempCtx.globalCompositeOperation='source-over';}pixelCanvas.width=finalW;pixelCanvas.height=finalH;ctx.imageSmoothingEnabled=false;ctx.drawImage(tempCanvas,0,0,pixW,pixH,0,0,finalW,finalH);if(s.ditherEnable){const imgData=ctx.getImageData(0,0,finalW,finalH),data=imgData.data;if(s.ditherAlgorithm==='legacy'){const rgb=hexToRgb(s.ditherColor),total=s.ditherSize+s.ditherGap;if(total>0)for(let i=0;i<data.length;i+=4)if(((data[i]+data[i+1]+data[i+2])/3)<s.ditherThreshold){const y=Math.floor((i/4)/finalW),x=(i/4)%finalW;if(((Math.floor(x/total)+Math.floor(y/total))%2===0)&&((x%total)<s.ditherSize)&&((y%total)<s.ditherSize)){data[i]=rgb.r;data[i+1]=rgb.g;data[i+2]=rgb.b;}}}else{const l=s.colorLevels,lM1=l<=1?1:l-1;for(let i=0;i<data.length;i+=4){const gray=0.299*data[i]+0.587*data[i+1]+0.114*data[i+2];const x=(i/4)%finalW,y=Math.floor((i/4)/finalW);let finalIdx;switch(s.ditherAlgorithm){case'bayer':case'crosshatch':const pSize=s.ditherPatternSize;const sX=Math.floor(x/pSize),sY=Math.floor(y/pSize);const matrix=ditherMatrices[s.ditherAlgorithm];const thr=(matrix[sY%4][sX%4]/16-0.5)*(255/l)*s.ditherStrength;finalIdx=Math.round((gray+(s.ditherAlgorithm==='bayer'?thr:-thr))/255*lM1);break;case'halftone':const cS=10/(s.ditherStrength||0.01),hC=cS/2,bL=Math.floor(gray/256*l),nR=(gray/256*l)-bL,d=Math.sqrt(Math.pow(x%cS-hC,2)+Math.pow(y%cS-hC,2));finalIdx=(d>nR*hC*0.8)?bL:bL+1;break;case'contour':const stp=255/l,wv=Math.sin(y*0.2*s.ditherStrength+gray/(stp*1.5))*(stp/2);finalIdx=Math.round((gray+wv)/255*lM1);break;}finalIdx=Math.max(0,Math.min(lM1,finalIdx));if(s.colorMap==='gradient'){const ratio=(lM1>0)?finalIdx/lM1:0;const finalC=getColorFromGradient(s.gradientColors,ratio);data[i]=finalC.r;data[i+1]=finalC.g;data[i+2]=finalC.b;}else{const targetB=(lM1>0)?(finalIdx/lM1)*255:0;if(gray>0){const adj=targetB/gray;data[i]*=adj;data[i+1]*=adj;data[i+2]*=adj;}else{data[i]=targetB;data[i+1]=targetB;data[i+2]=targetB;}}}}ctx.putImageData(imgData,0,0);}if(s.bloom>0){const glowCanvas=document.createElement('canvas');glowCanvas.width=finalW;glowCanvas.height=finalH;const glowCtx=glowCanvas.getContext('2d');const thresh=180;const bloomData=ctx.getImageData(0,0,finalW,finalH);for(let i=0;i<bloomData.data.length;i+=4)if((0.299*bloomData.data[i]+0.587*bloomData.data[i+1]+0.114*bloomData.data[i+2])<thresh)bloomData.data[i+3]=0;glowCtx.putImageData(bloomData,0,0);glowCtx.filter=`blur(${s.bloom}px)`;glowCtx.drawImage(glowCanvas,0,0);ctx.globalCompositeOperation='lighter';ctx.drawImage(glowCanvas,0,0);ctx.globalCompositeOperation='source-over';}resolve();});}
+            function clearCanvas(){ctx.clearRect(0,0,pixelCanvas.width,pixelCanvas.height);imageInput.value='';originalImage=null;history=[];historyIndex=-1;updateHistoryButtons();}
+            function resetAdvancedSettings(){document.getElementById('pixel-size').value=1;document.getElementById('pixel-size-num').value=1;['brightness','contrast','saturation'].forEach(id=>{document.getElementById(id).value=1;document.getElementById(id+'-num').value=1;});['sharpness','blur','sepia','temperature','hue-rotate','bloom'].forEach(id=>{document.getElementById(id).value=0;document.getElementById(id+'-num').value=0;});['grayscale','invert','dither-enable','experimental-enable','resolution-sync'].forEach(id=>document.getElementById(id).checked=false);document.getElementById('dither-threshold').value=85;document.getElementById('dither-threshold-num').value=85;document.getElementById('dither-size').value=7;document.getElementById('dither-size-num').value=7;document.getElementById('dither-gap').value=1;document.getElementById('dither-gap-num').value=1;document.getElementById('dither-color').value='#000000';document.getElementById('dither-strength').value=1;document.getElementById('dither-strength-num').value=1;document.getElementById('color-levels').value=4;document.getElementById('color-levels-num').value=4;document.getElementById('dither-pattern-size').value=1;document.getElementById('dither-pattern-size-num').value=1;['dither-controls','dither-settings-legacy','experimental-controls'].forEach(id=>document.getElementById(id).style.display='none');document.getElementById('dither-settings-modern').style.display='block';const ditherSel=document.getElementById('dither-selector');ditherSel.dataset.value='bayer';ditherSel.textContent='Bayer';updateDitherUI('bayer');const mapSel=document.getElementById('colormap-selector');mapSel.dataset.value='gradient';mapSel.textContent='Gradient';document.getElementById('gradient-controls').style.display='block';gradientColors=['#000000','#FFFFFF'];renderGradientStops();if(originalImage){document.getElementById('resolution-width').value=originalImage.width;document.getElementById('resolution-height').value=originalImage.height;}}
+            function factoryReset(){if(confirm('Are you sure? This will clear settings and reload.')){localStorage.clear();location.reload();}}
+            function exportAsPng(){if(!originalImage)return;const link=document.createElement('a');link.download=`${originalFileName}-pixelfy.png`;link.href=pixelCanvas.toDataURL('image/png');link.click();}
+            function toggleTheme(){isDarkTheme=!isDarkTheme;applyTheme(isDarkTheme?themes.dark:themes.light);saveSettings();}
+            function resetTheme(){applyTheme(isDarkTheme?themes.dark:themes.light);saveSettings();}
+            function applyTheme(theme){const r=document.documentElement;for(const[k,v]of Object.entries(theme)){r.style.setProperty(k,v);const i=document.getElementById(k.substring(2));if(i&&i.type==='color')i.value=v;}}
+            function applyGeneralSettings(save=true){document.querySelectorAll('#settings-panel input,#settings-panel select').forEach(i=>{if(i.id){let v=i.value;if(i.type==='number'&&!i.id.includes('in-frame-ui-scale'))v+='px';document.documentElement.style.setProperty('--'+i.id,v);}});if(save)saveSettings();}
+            function saveSettings(){const s={};pixelArtSettingsInputs.forEach(el=>{if(el.id){if(el.dataset.value)s[el.id]=el.dataset.value;else s[el.id]=el.type==='checkbox'?el.checked:el.value;}});s.gradientColors=gradientColors;localStorage.setItem('pixelArtGeneratorSettingsV10',JSON.stringify(s));localStorage.setItem('pixelArtTheme',isDarkTheme?'dark':'light');localStorage.setItem('isManualLayoutEnabled',isManualLayoutEnabled);localStorage.setItem('mainContainerLayoutClass',mainContainer.classList.contains('side-by-side-layout')?'side-by-side-layout':'');}
+            function loadSettings(){isDarkTheme=localStorage.getItem('pixelArtTheme')!=='light';applyTheme(isDarkTheme?themes.dark:themes.light);const s=JSON.parse(localStorage.getItem('pixelArtGeneratorSettingsV10'));if(s){pixelArtSettingsInputs.forEach(el=>{if(el.id&&s[el.id]!==undefined){if(el.dataset.hasOwnProperty('value')){el.dataset.value=s[el.id];el.textContent=s[el.id].charAt(0).toUpperCase()+s[el.id].slice(1)}else if(el.type==='checkbox'||el.type==='radio')el.checked=s[el.id];else el.value=s[el.id];}});gradientColors=s.gradientColors||['#000000','#FFFFFF'];renderGradientStops();updateDitherUI(document.getElementById('dither-selector').dataset.value||'bayer');document.getElementById('gradient-controls').style.display=(document.getElementById('colormap-selector').dataset.value==='gradient')?'block':'none';if(s.ditherEnable)document.getElementById('dither-controls').style.display='block';if(s.experimentalEnable)document.getElementById('experimental-controls').style.display='block';}applyGeneralSettings(false);isManualLayoutEnabled=localStorage.getItem('isManualLayoutEnabled')==='true';if(localStorage.getItem('mainContainerLayoutClass')==='side-by-side-layout'){mainContainer.classList.add('side-by-side-layout');advancedSettingsPanel.style.display='block';settingsPanel.style.display='none';isAdvancedPanelManuallyHidden=false;}else mainContainer.classList.remove('side-by-side-layout');}
+            function togglePanel(panel){const isAdv=panel.id==='advanced-settings-panel';if(panel.style.display==='block'){panel.style.display='none';if(isAdv)isAdvancedPanelManuallyHidden=true;}else{panel.style.display='block';if(isAdv){settingsPanel.style.display='none';isAdvancedPanelManuallyHidden=false;}else advancedSettingsPanel.style.display='none';}}
+            function closePanelsOnClickOutside(e){if(e.target.closest('input, select, .dialogue, #color-stop-actions, .dialogue-overlay'))return;if(settingsPanel.style.display==='block'&&!settingsPanel.contains(e.target)&&e.target!==settingsButton)settingsPanel.style.display='none';}
+            function toggleManualLayout(){isManualLayoutEnabled=!isManualLayoutEnabled;if(isManualLayoutEnabled){mainContainer.classList.add('side-by-side-layout');advancedSettingsPanel.style.display='block';advancedSettingsPanel.style.transform='translate3d(0,0,0)';dragState.xOffset=0;dragState.yOffset=0;isAdvancedPanelManuallyHidden=false;settingsPanel.style.display='none';}else{mainContainer.classList.remove('side-by-side-layout');advancedSettingsPanel.style.display='none';isAdvancedPanelManuallyHidden=true;advancedSettingsPanel.style.transform='none';dragState.xOffset=0;dragState.yOffset=0;}saveSettings();}
+            function checkLayout(){if(isManualLayoutEnabled){if(mainContainer.classList.contains('side-by-side-layout')){advancedSettingsPanel.style.display='block';settingsPanel.style.display='none';}else{advancedSettingsPanel.style.display='none';isAdvancedPanelManuallyHidden=true;}return;}const sideBySide=window.innerWidth>=992||(window.innerWidth>=768&&window.matchMedia("(orientation:landscape)").matches);if(sideBySide){mainContainer.classList.add('side-by-side-layout');if(!isAdvancedPanelManuallyHidden)advancedSettingsPanel.style.display='block';settingsPanel.style.display='none';}else{mainContainer.classList.remove('side-by-side-layout');if(advancedSettingsPanel.style.display==='none')isAdvancedPanelManuallyHidden=true;}if(!mainContainer.classList.contains('side-by-side-layout')){advancedSettingsPanel.style.transform='none';dragState.xOffset=0;dragState.yOffset=0;}}
+            function toggleFullscreen(){const isActive=frame.classList.toggle('fullscreen-active');if(isActive){advancedSettingsPanel.style.display='none';setTimeout(()=>{if(frame.classList.contains('fullscreen-active'))frame.classList.remove('reveal-ui');},3000);frame.addEventListener('click',revealFullscreenUi,{once:true});}else{frame.classList.remove('reveal-ui');checkLayout();}}
+            function revealFullscreenUi(){if(!frame.classList.contains('fullscreen-active'))return;frame.classList.add('reveal-ui');setTimeout(()=>frame.addEventListener('click',revealFullscreenUi,{once:true}),100);}
+            function toggleOriginalView(){if(!originalImage)return;showOriginal=!showOriginal;toggleViewButton.classList.toggle('active',showOriginal);renderPixelatedImage();}
+            function saveState(){const s=getPixelArtSettings();history=history.slice(0,historyIndex+1);history.push(s);historyIndex=history.length-1;updateHistoryButtons();}
+            function applyState(s){if(!s)return;pixelArtSettingsInputs.forEach(el=>{if(el.id&&s[el.id]!==undefined){if(el.dataset.hasOwnProperty('value')){el.dataset.value=s[el.id];el.textContent=s[el.id].charAt(0).toUpperCase()+s[el.id].slice(1)}else if(el.type==='checkbox'||el.type==='radio')el.checked=s[el.id];else el.value=s[el.id];}});gradientColors=s.gradientColors||['#000000','#FFFFFF'];renderGradientStops();updateDitherUI(s.ditherAlgorithm||'bayer');document.getElementById('gradient-controls').style.display=s.colorMap==='gradient'?'block':'none';document.getElementById('dither-controls').style.display=s.ditherEnable?'block':'none';document.getElementById('experimental-controls').style.display=s.experimentalEnable?'block':'none';renderPixelatedImage();}
+            function undo(){if(historyIndex>0){historyIndex--;applyState(history[historyIndex]);updateHistoryButtons();}}
+            function redo(){if(historyIndex<history.length-1){historyIndex++;applyState(history[historyIndex]);updateHistoryButtons();}}
+            function updateHistoryButtons(){undoButton.disabled=historyIndex<=0;redoButton.disabled=historyIndex>=history.length-1;}
+            function getTranslateXY(elm){const m=new DOMMatrixReadOnly(window.getComputedStyle(elm).transform);return{x:m.m41,y:m.m42};}
+            function dragStart(e){if(!mainContainer.classList.contains('side-by-side-layout')||advancedSettingsPanel.style.display==='none'||e.target!==dragHandle)return;const t=getTranslateXY(advancedSettingsPanel);dragState.xOffset=t.x;dragState.yOffset=t.y;dragState.initialX=(e.type==='touchstart'?e.touches[0].clientX:e.clientX)-dragState.xOffset;dragState.initialY=(e.type==='touchstart'?e.touches[0].clientY:e.clientY)-dragState.yOffset;dragState.active=true;document.body.style.cursor='grabbing';document.addEventListener('mouseup',dragEnd,{passive:false});document.addEventListener('touchend',dragEnd,{passive:false});document.addEventListener('mousemove',drag,{passive:false});document.addEventListener('touchmove',drag,{passive:false});}
+            function dragEnd(){dragState.active=false;document.body.style.cursor='';document.removeEventListener('mouseup',dragEnd);document.removeEventListener('touchend',dragEnd);document.removeEventListener('mousemove',drag);document.removeEventListener('touchmove',drag);}
+            function drag(e){if(dragState.active){e.preventDefault();dragState.currentX=(e.type==='touchmove'?e.touches[0].clientX:e.clientX)-dragState.initialX;dragState.currentY=(e.type==='touchmove'?e.touches[0].clientY:e.clientY)-dragState.initialY;advancedSettingsPanel.style.transform=`translate3d(${dragState.currentX}px,${dragState.currentY}px,0)`;}}
+            setupEventListeners();
+            loadSettings();
+            renderGradientStops();
+            checkLayout();
+            updateHistoryButtons();
         });
     </script>
 </body>
