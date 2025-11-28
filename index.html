@@ -429,6 +429,16 @@
         .color-input-group input[type="color"]::-moz-color-swatch {
             border: none;
         }
+
+        .color-stop-preview {
+            width: 30px; 
+            height: 30px; 
+            border: 1px solid var(--settings-outline);
+            border-radius: 3px; 
+            cursor: pointer; 
+            display: inline-block;
+            margin-right: 5px;
+        }
         
         .color-pickers {
             display: flex;
@@ -436,10 +446,6 @@
             gap: 5px;
             flex-grow: 1;
             flex-wrap: wrap;
-        }
-
-        .color-pickers input[type="color"] {
-            cursor: pointer;
         }
         
         #add-color-stop-btn {
@@ -738,8 +744,8 @@
                                     <input type="number" id="color-levels-num" min="2" max="16" value="4" step="1" class="slider-value-input">
                                 </div>
                                 <div>
-                                    <label>Color Map: <button id="colormap-selector" data-value="gradient" style="width: auto; padding: 2px 6px;">Gradient</button></label>
-                                    <div id="gradient-controls">
+                                    <label>Color Map: <button id="colormap-selector" data-value="auto" style="width: auto; padding: 2px 6px;">Auto</button></label>
+                                    <div id="gradient-controls" style="display:none;">
                                         <div class="color-input-group">
                                             <div class="color-pickers" id="gradient-color-stops">
                                             </div>
@@ -1023,9 +1029,9 @@
                 document.getElementById('color-stop-actions').addEventListener('click', (e) => {
                     if (!activeColorStop) return;
                     if (e.target.dataset.action === 'edit') {
-                        activeColorStop.click();
+                        activeColorStop.input.click();
                     } else if (e.target.dataset.action === 'remove' && gradientColors.length > 1) {
-                        gradientColors.splice(parseInt(activeColorStop.dataset.index, 10), 1);
+                        gradientColors.splice(activeColorStop.index, 1);
                         renderGradientStops();
                         renderPixelatedImage().then(saveState);
                     }
@@ -1059,15 +1065,34 @@
             function renderGradientStops() {
                 const container = document.getElementById('gradient-color-stops'); container.innerHTML = '';
                 gradientColors.forEach((color, index) => {
-                    const colorInput = document.createElement('input'); colorInput.type = 'color'; colorInput.value = color; colorInput.dataset.index = index; let inputTimeout;
-                    colorInput.addEventListener('input', e => { gradientColors[index] = e.target.value; clearTimeout(inputTimeout); inputTimeout = setTimeout(() => renderPixelatedImage(), 20); });
-                    colorInput.addEventListener('change', () => renderPixelatedImage().then(saveState));
-                    colorInput.addEventListener('click', e => {
-                        e.preventDefault(); activeColorStop = e.target;
+                    const wrapper = document.createElement('div');
+                    wrapper.style.display = 'inline-block';
+                    const preview = document.createElement('div');
+                    preview.className = 'color-stop-preview';
+                    preview.style.backgroundColor = color;
+                    preview.dataset.index = index;
+                    const input = document.createElement('input');
+                    input.type = 'color';
+                    input.value = color;
+                    input.style.display = 'none';
+                    let inputTimeout;
+                    input.addEventListener('input', e => { 
+                        gradientColors[index] = e.target.value; 
+                        preview.style.backgroundColor = e.target.value;
+                        clearTimeout(inputTimeout); 
+                        inputTimeout = setTimeout(() => renderPixelatedImage(), 20); 
+                    });
+                    input.addEventListener('change', () => renderPixelatedImage().then(saveState));
+                    preview.addEventListener('click', e => {
+                        e.preventDefault(); 
+                        activeColorStop = { preview: preview, input: input, index: index };
                         const actionsPopup = document.getElementById('color-stop-actions');
                         dialogueOverlay.style.display = 'block'; actionsPopup.style.display = 'block';
                         actionsPopup.style.left = `${e.clientX}px`; actionsPopup.style.top = `${e.clientY}px`;
-                    }); container.appendChild(colorInput);
+                    }); 
+                    wrapper.appendChild(preview);
+                    wrapper.appendChild(input);
+                    container.appendChild(wrapper);
                 });
             }
             function handleFileUpload(file) {
@@ -1079,14 +1104,14 @@
             }
             function getPixelArtSettings() {
                 const getV=id=>parseFloat(document.getElementById(id).value), getC=id=>document.getElementById(id).checked, getD=id=>document.getElementById(id).dataset.value;
-                return { pixelSize: getV('pixel-size'), brightness:getV('brightness'), contrast:getV('contrast'), saturation:getV('saturation'), sharpness:getV('sharpness'), blur:getV('blur'), sepia:getV('sepia'), temperature:getV('temperature'), hueRotate:getV('hue-rotate'), grayscale:getC('grayscale'), invert:getC('invert'), ditherEnable:getC('dither-enable'), ditherAlgorithm:getD('dither-selector')||'bayer', ditherStrength:getV('dither-strength'), colorLevels:getV('color-levels'), colorMap:getD('colormap-selector')||'gradient', gradientColors:[...gradientColors], ditherThreshold:getV('dither-threshold'), ditherSize:getV('dither-size'), ditherGap:getV('dither-gap'), ditherColor:document.getElementById('dither-color').value, bloom:getV('bloom'), ditherPatternSize:getV('dither-pattern-size'), experimentalEnable:getC('experimental-enable'), resolutionWidth:getV('resolution-width'), resolutionHeight:getV('resolution-height'), resolutionSync:getC('resolution-sync') };
+                return { pixelSize: getV('pixel-size'), brightness:getV('brightness'), contrast:getV('contrast'), saturation:getV('saturation'), sharpness:getV('sharpness'), blur:getV('blur'), sepia:getV('sepia'), temperature:getV('temperature'), hueRotate:getV('hue-rotate'), grayscale:getC('grayscale'), invert:getC('invert'), ditherEnable:getC('dither-enable'), ditherAlgorithm:getD('dither-selector')||'bayer', ditherStrength:getV('dither-strength'), colorLevels:getV('color-levels'), colorMap:getD('colormap-selector')||'auto', gradientColors:[...gradientColors], ditherThreshold:getV('dither-threshold'), ditherSize:getV('dither-size'), ditherGap:getV('dither-gap'), ditherColor:document.getElementById('dither-color').value, bloom:getV('bloom'), ditherPatternSize:getV('dither-pattern-size'), experimentalEnable:getC('experimental-enable'), resolutionWidth:getV('resolution-width'), resolutionHeight:getV('resolution-height'), resolutionSync:getC('resolution-sync') };
             }
             function hexToRgb(h){if(!h)return{r:0,g:0,b:0};const r=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h);return r?{r:parseInt(r[1],16),g:parseInt(r[2],16),b:parseInt(r[3],16)}:{r:0,g:0,b:0};}
             function lerpColor(a,b,amt){return{r:a.r+amt*(b.r-a.r),g:a.g+amt*(b.g-a.g),b:a.b+amt*(b.b-a.b)};}
             function getColorFromGradient(cs,amt){const sc=cs.length-1;if(sc<=0)return hexToRgb(cs[0]||'#000');const sa=amt*sc,si=Math.floor(sa),la=sa-si;const sC=hexToRgb(cs[Math.min(sc,si)]),eC=hexToRgb(cs[Math.min(sc,si+1)]);return lerpColor(sC,eC,la);}
             async function renderPixelatedImage(){return new Promise(resolve=>{if(!originalImage)return resolve();if(showOriginal){pixelCanvas.width=originalImage.width;pixelCanvas.height=originalImage.height;ctx.clearRect(0,0,pixelCanvas.width,pixelCanvas.height);ctx.drawImage(originalImage,0,0);return resolve();}const s=getPixelArtSettings();let sourceCanvas=originalImage,finalW=originalImage.width,finalH=originalImage.height;if(s.experimentalEnable&&s.resolutionWidth>0&&s.resolutionHeight>0){finalW=s.resolutionWidth;finalH=s.resolutionHeight;const resCanvas=document.createElement('canvas');resCanvas.width=finalW;resCanvas.height=finalH;resCanvas.getContext('2d').drawImage(originalImage,0,0,finalW,finalH);sourceCanvas=resCanvas;}const tempCanvas=document.createElement('canvas'),tempCtx=tempCanvas.getContext('2d');const pixW=Math.max(1,Math.round(finalW/s.pixelSize)),pixH=Math.max(1,Math.round(finalH/s.pixelSize));tempCanvas.width=pixW;tempCanvas.height=pixH;tempCtx.filter=`brightness(${s.brightness}) contrast(${s.contrast*(1+s.sharpness/2)}) saturate(${s.saturation}) grayscale(${s.grayscale?1:0}) sepia(${s.sepia}) invert(${s.invert?1:0}) hue-rotate(${s.hueRotate}deg) blur(${s.blur}px)`;tempCtx.drawImage(sourceCanvas,0,0,pixW,pixH);if(s.temperature!==0){const val=s.temperature/100;tempCtx.globalCompositeOperation='overlay';tempCtx.fillStyle=val>0?`rgba(255,150,0,${val})`:`rgba(0,150,255,${-val})`;tempCtx.fillRect(0,0,pixW,pixH);tempCtx.globalCompositeOperation='source-over';}pixelCanvas.width=finalW;pixelCanvas.height=finalH;ctx.imageSmoothingEnabled=false;ctx.drawImage(tempCanvas,0,0,pixW,pixH,0,0,finalW,finalH);if(s.ditherEnable){const imgData=ctx.getImageData(0,0,finalW,finalH),data=imgData.data;if(s.ditherAlgorithm==='legacy'){const rgb=hexToRgb(s.ditherColor),total=s.ditherSize+s.ditherGap;if(total>0)for(let i=0;i<data.length;i+=4)if(((data[i]+data[i+1]+data[i+2])/3)<s.ditherThreshold){const y=Math.floor((i/4)/finalW),x=(i/4)%finalW;if(((Math.floor(x/total)+Math.floor(y/total))%2===0)&&((x%total)<s.ditherSize)&&((y%total)<s.ditherSize)){data[i]=rgb.r;data[i+1]=rgb.g;data[i+2]=rgb.b;}}}else{const l=s.colorLevels,lM1=l<=1?1:l-1;for(let i=0;i<data.length;i+=4){const gray=0.299*data[i]+0.587*data[i+1]+0.114*data[i+2];const x=(i/4)%finalW,y=Math.floor((i/4)/finalW);let finalIdx;switch(s.ditherAlgorithm){case'bayer':case'crosshatch':const pSize=s.ditherPatternSize;const sX=Math.floor(x/pSize),sY=Math.floor(y/pSize);const matrix=ditherMatrices[s.ditherAlgorithm];const thr=(matrix[sY%4][sX%4]/16-0.5)*(255/l)*s.ditherStrength;finalIdx=Math.round((gray+(s.ditherAlgorithm==='bayer'?thr:-thr))/255*lM1);break;case'halftone':const cS=10/(s.ditherStrength||0.01),hC=cS/2,bL=Math.floor(gray/256*l),nR=(gray/256*l)-bL,d=Math.sqrt(Math.pow(x%cS-hC,2)+Math.pow(y%cS-hC,2));finalIdx=(d>nR*hC*0.8)?bL:bL+1;break;case'contour':const stp=255/l,wv=Math.sin(y*0.2*s.ditherStrength+gray/(stp*1.5))*(stp/2);finalIdx=Math.round((gray+wv)/255*lM1);break;}finalIdx=Math.max(0,Math.min(lM1,finalIdx));if(s.colorMap==='gradient'){const ratio=(lM1>0)?finalIdx/lM1:0;const finalC=getColorFromGradient(s.gradientColors,ratio);data[i]=finalC.r;data[i+1]=finalC.g;data[i+2]=finalC.b;}else{const targetB=(lM1>0)?(finalIdx/lM1)*255:0;if(gray>0){const adj=targetB/gray;data[i]*=adj;data[i+1]*=adj;data[i+2]*=adj;}else{data[i]=targetB;data[i+1]=targetB;data[i+2]=targetB;}}}}ctx.putImageData(imgData,0,0);}if(s.bloom>0){const glowCanvas=document.createElement('canvas');glowCanvas.width=finalW;glowCanvas.height=finalH;const glowCtx=glowCanvas.getContext('2d');const thresh=180;const bloomData=ctx.getImageData(0,0,finalW,finalH);for(let i=0;i<bloomData.data.length;i+=4)if((0.299*bloomData.data[i]+0.587*bloomData.data[i+1]+0.114*bloomData.data[i+2])<thresh)bloomData.data[i+3]=0;glowCtx.putImageData(bloomData,0,0);glowCtx.filter=`blur(${s.bloom}px)`;glowCtx.drawImage(glowCanvas,0,0);ctx.globalCompositeOperation='lighter';ctx.drawImage(glowCanvas,0,0);ctx.globalCompositeOperation='source-over';}resolve();});}
             function clearCanvas(){ctx.clearRect(0,0,pixelCanvas.width,pixelCanvas.height);imageInput.value='';originalImage=null;history=[];historyIndex=-1;updateHistoryButtons();}
-            function resetAdvancedSettings(){document.getElementById('pixel-size').value=1;document.getElementById('pixel-size-num').value=1;['brightness','contrast','saturation'].forEach(id=>{document.getElementById(id).value=1;document.getElementById(id+'-num').value=1;});['sharpness','blur','sepia','temperature','hue-rotate','bloom'].forEach(id=>{document.getElementById(id).value=0;document.getElementById(id+'-num').value=0;});['grayscale','invert','dither-enable','experimental-enable','resolution-sync'].forEach(id=>document.getElementById(id).checked=false);document.getElementById('dither-threshold').value=85;document.getElementById('dither-threshold-num').value=85;document.getElementById('dither-size').value=7;document.getElementById('dither-size-num').value=7;document.getElementById('dither-gap').value=1;document.getElementById('dither-gap-num').value=1;document.getElementById('dither-color').value='#000000';document.getElementById('dither-strength').value=1;document.getElementById('dither-strength-num').value=1;document.getElementById('color-levels').value=4;document.getElementById('color-levels-num').value=4;document.getElementById('dither-pattern-size').value=1;document.getElementById('dither-pattern-size-num').value=1;['dither-controls','dither-settings-legacy','experimental-controls'].forEach(id=>document.getElementById(id).style.display='none');document.getElementById('dither-settings-modern').style.display='block';const ditherSel=document.getElementById('dither-selector');ditherSel.dataset.value='bayer';ditherSel.textContent='Bayer';updateDitherUI('bayer');const mapSel=document.getElementById('colormap-selector');mapSel.dataset.value='gradient';mapSel.textContent='Gradient';document.getElementById('gradient-controls').style.display='block';gradientColors=['#000000','#FFFFFF'];renderGradientStops();if(originalImage){document.getElementById('resolution-width').value=originalImage.width;document.getElementById('resolution-height').value=originalImage.height;}}
+            function resetAdvancedSettings(){document.getElementById('pixel-size').value=1;document.getElementById('pixel-size-num').value=1;['brightness','contrast','saturation'].forEach(id=>{document.getElementById(id).value=1;document.getElementById(id+'-num').value=1;});['sharpness','blur','sepia','temperature','hue-rotate','bloom'].forEach(id=>{document.getElementById(id).value=0;document.getElementById(id+'-num').value=0;});['grayscale','invert','dither-enable','experimental-enable','resolution-sync'].forEach(id=>document.getElementById(id).checked=false);document.getElementById('dither-threshold').value=85;document.getElementById('dither-threshold-num').value=85;document.getElementById('dither-size').value=7;document.getElementById('dither-size-num').value=7;document.getElementById('dither-gap').value=1;document.getElementById('dither-gap-num').value=1;document.getElementById('dither-color').value='#000000';document.getElementById('dither-strength').value=1;document.getElementById('dither-strength-num').value=1;document.getElementById('color-levels').value=4;document.getElementById('color-levels-num').value=4;document.getElementById('dither-pattern-size').value=1;document.getElementById('dither-pattern-size-num').value=1;['dither-controls','dither-settings-legacy','experimental-controls'].forEach(id=>document.getElementById(id).style.display='none');document.getElementById('dither-settings-modern').style.display='block';const ditherSel=document.getElementById('dither-selector');ditherSel.dataset.value='bayer';ditherSel.textContent='Bayer';updateDitherUI('bayer');const mapSel=document.getElementById('colormap-selector');mapSel.dataset.value='auto';mapSel.textContent='Auto';document.getElementById('gradient-controls').style.display='none';gradientColors=['#000000','#FFFFFF'];renderGradientStops();if(originalImage){document.getElementById('resolution-width').value=originalImage.width;document.getElementById('resolution-height').value=originalImage.height;}}
             function factoryReset(){if(confirm('Are you sure? This will clear settings and reload.')){localStorage.clear();location.reload();}}
             function exportAsPng(){if(!originalImage)return;const link=document.createElement('a');link.download=`${originalFileName}-pixelfy.png`;link.href=pixelCanvas.toDataURL('image/png');link.click();}
             function toggleTheme(){isDarkTheme=!isDarkTheme;applyTheme(isDarkTheme?themes.dark:themes.light);saveSettings();}
@@ -1120,3 +1145,4 @@
     </script>
 </body>
 </html>
+<!-- You found me, I am an easter egg. I don't think I will hatch yet-->
