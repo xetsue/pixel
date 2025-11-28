@@ -1,6 +1,13 @@
 # Pixelfy
 Pixelfy — Pixelate and add dithering to photos.
-## Previews
+
+## Previews 1
+> ![1000340405](https://github.com/user-attachments/assets/0e4d0690-79c7-4265-8c45-7b58beb347da)
+> ![1000340402](https://github.com/user-attachments/assets/d60f0554-12b6-488f-96be-65c45059267b)
+> ![1000340397](https://github.com/user-attachments/assets/86920af3-5680-4d11-9b12-1a0563e3229e)
+
+
+## Previews 2
 Pixelated
 ><img width="540" height="943" alt="1000300419" src="https://github.com/user-attachments/assets/60dca428-9329-4566-b717-5c2933bebc56" />
 Pixelated + Dithers shading
