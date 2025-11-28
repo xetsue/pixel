@@ -1,6 +1,15 @@
 # Pixelfy
 Pixelfy — Pixelate and add dithering to photos.
 
+## Usage
+1. Using Web-App: [xetsue.github.io/pixel/](https://xetsue.github.io/pixel/)
+2. Download to Device
+- [Download Here](https://github.com/xetsue/pixel/archive/refs/heads/main.zip)
+- Unzip anywhere on your device
+- Open index.html in a browser
+
+> The processing is done completely offline and locally on your browser, there is no data connection needed for this to be possible.
+
 ## Previews 1
 > ![1000340405](https://github.com/user-attachments/assets/0e4d0690-79c7-4265-8c45-7b58beb347da)
 > ![1000340402](https://github.com/user-attachments/assets/d60f0554-12b6-488f-96be-65c45059267b)
